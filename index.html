@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Mirror Garden</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
-    
+
     <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
     <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
     <py-config>
@@ -15,18 +17,21 @@
         files = ["./main.py"]
     </py-config>
 </head>
+
 <body>
     <div id="left-anchor"></div>
     <div id="left-barrier"></div>
-    
-    <div id="app-container">
-        <canvas id="game-canvas"></canvas>
+
+    <div id="unlock-instruction"
+        style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 2rem; font-weight: bold; text-shadow: 0 0 10px red; display: none; z-index: 150;">
+        請點擊左側出現的光球解鎖！
     </div>
 
     <div id="reward-ui">
         <div id="flower-container"></div>
         <div id="reward-text"></div>
-        <button id="next-btn" style="margin-top: 20px; padding: 10px 20px; font-size: 1.5rem; background: #ffd700; color: #000; border: none; border-radius: 10px; cursor: pointer;">下一關</button>
+        <button id="next-btn"
+            style="margin-top: 20px; padding: 10px 20px; font-size: 1.5rem; background: #ffd700; color: #000; border: none; border-radius: 10px; cursor: pointer;">下一關</button>
     </div>
 
     <script>
@@ -39,12 +44,13 @@
                 });
             });
         }
-        
+
         document.addEventListener('touchmove', function (e) {
             e.preventDefault();
         }, { passive: false });
     </script>
-    
+
     <py-script src="./main.py"></py-script>
 </body>
+
 </html>

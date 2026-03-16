@@ -13,12 +13,15 @@ class MirrorGarden:
         self.reward_text = document.getElementById('reward-text')
         self.flower_container = document.getElementById('flower-container')
         self.next_btn = document.getElementById('next-btn')
+        self.unlock_instruction = document.getElementById('unlock-instruction')
         
         self.mode = "A" # Start with A
+        self.state = "DRAWING" # States: DRAWING, WAITING_LEFT, REWARD
         self.is_drawing = False
         self.paths = []
         self.target_path = []
         self.target_covered = []
+        self.left_unlock_target = None # (x, y, radius)
         
         self.last_left_attention_time = window.performance.now()
         
@@ -152,6 +155,9 @@ class MirrorGarden:
         return points
 
     def reset_level(self):
+        self.state = "DRAWING"
+        self.left_unlock_target = None
+        self.unlock_instruction.style.display = "none"
         self.paths = []
         self.target_path = []
         self.target_covered = []
@@ -170,7 +176,7 @@ class MirrorGarden:
             self.last_left_attention_time = window.performance.now()
             
     def update_coverage(self, x, y):
-        if not self.target_path: return
+        if self.state != "DRAWING" or not self.target_path: return
         threshold = 65 # increased pixel distance for easier tracing
         for i, (tx, ty) in enumerate(self.target_path):
             if not self.target_covered[i]:
@@ -185,19 +191,29 @@ class MirrorGarden:
 
     def on_touch_start(self, e):
         e.preventDefault()
-        if self.reward_ui.classList.contains("visible"): return
+        if self.state == "REWARD": return
         
-        self.is_drawing = True
         x, y = self.get_coords(e)
-        self.paths.append([(x, y)])
         self.check_left_attention(x)
+        
+        if self.state == "WAITING_LEFT":
+            self.check_left_unlock(x, y)
+            return
+            
+        self.is_drawing = True
+        self.paths.append([(x, y)])
         self.update_coverage(x, y)
         
     def on_touch_move(self, e):
         e.preventDefault()
-        if not self.is_drawing or self.reward_ui.classList.contains("visible"): return
+        if not self.is_drawing or self.state == "REWARD": return
             
         x, y = self.get_coords(e)
+        
+        if self.state == "WAITING_LEFT":
+             self.check_left_unlock(x, y)
+             return
+             
         if len(self.paths) > 0:
             self.paths[-1].append((x, y))
             self.check_left_attention(x)
@@ -252,8 +268,30 @@ class MirrorGarden:
             self.ctx.stroke()
             self.ctx.shadowBlur = 0
             
+    def draw_unlock_target(self, time):
+        if self.state != "WAITING_LEFT" or not self.left_unlock_target: return
+        x, y, base_r = self.left_unlock_target
+        
+        # Pulsing radius
+        pulse = math.sin(time / 150.0) * 10
+        r = base_r + pulse
+        
+        self.ctx.beginPath()
+        self.ctx.arc(x, y, r, 0, math.pi * 2)
+        self.ctx.fillStyle = "#FF3366"
+        self.ctx.shadowBlur = 30
+        self.ctx.shadowColor = "#FF0000"
+        self.ctx.fill()
+        
+        # Inner white core
+        self.ctx.beginPath()
+        self.ctx.arc(x, y, base_r * 0.4, 0, math.pi * 2)
+        self.ctx.fillStyle = "#FFFFFF"
+        self.ctx.fill()
+        self.ctx.shadowBlur = 0
+            
     def check_attention_timeout(self, current_time):
-        if self.reward_ui.classList.contains("visible"): return
+        if self.state != "DRAWING": return
         # Left barrier wave effect if drawing on right but ignoring left for 5s
         if current_time - self.last_left_attention_time > 5000 and self.is_drawing:
             self.left_barrier.classList.add("wave-barrier-active")
@@ -268,23 +306,43 @@ class MirrorGarden:
         
         self.draw_target_path()
         self.draw_mirrored_paths()
+        self.draw_unlock_target(time)
         self.check_attention_timeout(time)
         
-        # Check success condition
-        if not self.reward_ui.classList.contains("visible"):
+        # Check success condition (Transition to WAITING_LEFT)
+        if self.state == "DRAWING":
             if self.mode in ["A", "B"] and len(self.target_path) > 0:
                 coverage_percent = sum(self.target_covered) / len(self.target_covered)
-                if coverage_percent > 0.80:  # 80% covered is practical for rehab tracing
-                    self.trigger_reward()
+                if coverage_percent > 0.80:  # 80% covered
+                    self.spawn_left_target()
             elif self.mode == "C":
-                # Free form requires enough ink drawn on both sides
                 total_points = sum(len(p) for p in self.paths)
-                if total_points > 150: # Adjust length as needed
-                    self.trigger_reward()
-        
+                if total_points > 150: 
+                    self.spawn_left_target()
+                    
         requestAnimationFrame(self.render_proxy)
         
+    def spawn_left_target(self):
+        self.state = "WAITING_LEFT"
+        self.unlock_instruction.style.display = "block"
+        self.is_drawing = False
+        target_x = random.uniform(50, self.width * 0.2) # Far left 20%
+        target_y = random.uniform(100, self.height - 100)
+        self.left_unlock_target = (target_x, target_y, 40) # x, y, radius
+        console.log("Spawned left target at", target_x, target_y)
+
+    def check_left_unlock(self, x, y):
+        if not self.left_unlock_target: return
+        tx, ty, r = self.left_unlock_target
+        dist = math.hypot(x - tx, y - ty)
+        # Give a generous hit radius for the unlock target
+        if dist < r + 40: 
+            self.left_unlock_target = None
+            self.trigger_reward()
+        
     def trigger_reward(self):
+        self.state = "REWARD"
+        self.unlock_instruction.style.display = "none"
         phrase = random.choice(self.praise_phrases)
         self.reward_text.innerText = phrase
         
