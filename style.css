@@ -1,0 +1,114 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    touch-action: none;
+}
+
+body, html {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+}
+
+#app-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#left-anchor {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 20px;
+    background-color: red;
+    z-index: 100;
+    border-radius: 0 5px 5px 0;
+}
+
+.wave-effect {
+    animation: wave-animation 0.5s infinite;
+}
+
+@keyframes wave-animation {
+    0% { transform: translateY(-50%) translateX(0); box-shadow: 0 0 10px red; }
+    50% { transform: translateY(-50%) translateX(5px); box-shadow: 0 0 20px #ff5555; }
+    100% { transform: translateY(-50%) translateX(0); box-shadow: 0 0 10px red; }
+}
+
+#left-barrier {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 15px;
+    background: transparent;
+    z-index: 99;
+}
+
+.wave-barrier-active {
+    background: linear-gradient(90deg, rgba(255,0,0,0.8) 0%, rgba(255,0,0,0) 100%);
+    animation: barrier-wave 1s infinite;
+}
+
+@keyframes barrier-wave {
+    0% { transform: scaleX(1); opacity: 0.5; }
+    50% { transform: scaleX(2); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0.5; }
+}
+
+#reward-ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+#reward-ui.visible {
+    opacity: 1;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.8);
+}
+
+#flower-container {
+    width: 200px;
+    height: 200px;
+}
+
+#reward-text {
+    margin-top: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
